@@ -65,6 +65,42 @@ footer{text-align:center;color:#738099;font-size:12px;margin-top:18px}
     <p class="note">Formula used in this calculator: Corrected CO = CO × factor ÷ (CO + CO₂). Factor 10 for 2-stroke and 15 for 4-stroke, following the formula used in this conversation. Confirm the applicable test-standard formula and limits with your emissions-testing authority.</p>
   </section>
   <footer>Works offline after the page is saved on your device.</footer>
+
+<div id="installBanner" style="display:none;margin-top:15px;padding:12px;background:#1e293b;border:1px solid #3b82f6;border-radius:12px;text-align:center;">
+  <span style="font-size:14px;color:#e2e8f0;">App install panna push panga: </span>
+  <button id="installBtn" style="margin-left:8px;padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">Install App</button>
+</div>
+<script>
+let deferredPrompt;
+const installBanner = document.getElementById('installBanner');
+const installBtn = document.getElementById('installBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if(installBanner) installBanner.style.display = 'block';
+});
+
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      }
+      deferredPrompt = null;
+      installBanner.style.display = 'none';
+    }
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  if(installBanner) installBanner.style.display = 'none';
+  deferredPrompt = null;
+});
+</script>
+
 </main>
 <script>
 const engine=document.getElementById('engine'), co=document.getElementById('co'), co2=document.getElementById('co2');
