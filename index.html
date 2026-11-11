@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111827">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>Corrected CO Calculator</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#151d31;--line:#293550;--gold:#f5c451;--muted:#aab5c8;--white:#f8fafc}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#1b2944 0,#0b1020 55%);font:16px system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--white);display:grid;place-items:center;padding:22px}
+main{width:min(100%,470px)}.brand{font-size:12px;letter-spacing:2px;color:var(--gold);font-weight:800;text-transform:uppercase;margin:0 0 8px}
+h1{font-size:clamp(25px,6vw,34px);margin:0 0 7px}.sub{color:var(--muted);margin:0 0 24px;font-size:14px}
+.card{background:rgba(21,29,49,.96);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 18px 50px #0005}
+label{display:block;font-weight:650;font-size:14px;margin:17px 0 8px}
+select,input{width:100%;border:1px solid #3a4966;background:#0d1527;color:var(--white);border-radius:12px;padding:14px;font-size:17px;outline:none}
+select:focus,input:focus{border-color:var(--gold);box-shadow:0 0 0 3px #f5c45122}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.unit{color:var(--muted);font-size:12px;margin-top:6px}
+.result{margin-top:22px;padding:19px;border-radius:16px;background:linear-gradient(135deg,#302817,#1d2639);border:1px solid #79612d}
+.result small{color:#f7d98c;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.value{font-size:clamp(36px,10vw,48px);font-weight:850;letter-spacing:-1.5px;margin:5px 0 0;color:#fff}
+.value span{font-size:19px;color:#f5c451;letter-spacing:0}
+.equation{color:var(--muted);font-size:13px;margin-top:10px;overflow-wrap:anywhere}
+.actions{display:flex;gap:10px;margin-top:17px}button{flex:1;border:0;border-radius:12px;padding:13px;font-size:15px;font-weight:750;cursor:pointer}
+.primary{background:var(--gold);color:#171717}.secondary{background:#293550;color:var(--white)}
+.note{font-size:12px;line-height:1.5;color:var(--muted);margin:17px 2px 0}
+footer{text-align:center;color:#738099;font-size:12px;margin-top:18px}
+@media(max-width:360px){.grid{grid-template-columns:1fr}.card{padding:17px}}
+</style>
+</head>
+<body>
+<main>
+  <p class="brand">Vehicle Emissions Tool</p>
+  <h1>Corrected CO Calculator</h1>
+  <p class="sub">Calculate corrected carbon monoxide from your gas analyser readings.</p>
+  <section class="card">
+    <div class="result" aria-live="polite">
+      <small>Corrected CO</small>
+      <div class="value" id="answer">— <span>%</span></div>
+      <div class="equation" id="equation">Enter CO and CO₂ readings to calculate.</div>
+    </div>
+    <div class="grid">
+      <div>
+        <label for="co">CO reading</label>
+        <input id="co" type="number" inputmode="decimal" min="0" step="any" placeholder="e.g. 2.993">
+        <div class="unit">CO (%)</div>
+      </div>
+      <div>
+        <label for="co2">CO₂ reading</label>
+        <input id="co2" type="number" inputmode="decimal" min="0" step="any" placeholder="e.g. 4.560">
+        <div class="unit">CO₂ (%)</div>
+      </div>
+    </div>
+    <label for="engine">Engine type</label>
+    <select id="engine">
+      <option value="15" selected>4-stroke (factor 15)</option>
+      <option value="10">2-stroke (factor 10)</option>
+    </select>
+    <div class="actions">
+      <button class="primary" id="copy" type="button">Copy result</button>
+      <button class="secondary" id="reset" type="button">Reset</button>
+    </div>
+    <p class="note">Formula used in this calculator: Corrected CO = CO × factor ÷ (CO + CO₂). Factor 10 for 2-stroke and 15 for 4-stroke, following the formula used in this conversation. Confirm the applicable test-standard formula and limits with your emissions-testing authority.</p>
+  </section>
+  <footer>Works offline after the page is saved on your device.</footer>
+</main>
+<script>
+const engine=document.getElementById('engine'), co=document.getElementById('co'), co2=document.getElementById('co2');
+const answer=document.getElementById('answer'), equation=document.getElementById('equation');
+let result=null;
+function calculate(){
+  const a=Number(co.value), b=Number(co2.value), factor=Number(engine.value);
+  if(co.value.trim()===''||co2.value.trim()===''||!Number.isFinite(a)||!Number.isFinite(b)||a<0||b<0||a+b===0){
+    result=null; answer.innerHTML='— <span>%</span>';
+    equation.textContent='Enter valid non-negative CO and CO₂ readings (their total must be above zero).'; return;
+  }
+  result=a*factor/(a+b);
+  answer.innerHTML=result.toFixed(3)+' <span>%</span>';
+  equation.textContent=`${a} × ${factor} ÷ (${a} + ${b}) = ${result.toFixed(6)}%`;
+}
+[engine,co,co2].forEach(el=>el.addEventListener('input',calculate));
+document.getElementById('reset').addEventListener('click',()=>{engine.value='15';co.value='';co2.value='';calculate();});
+document.getElementById('copy').addEventListener('click',async()=>{
+  if(result===null){equation.textContent='Enter valid readings before copying.';return;}
+  const text=`Corrected CO: ${result.toFixed(3)}% (${engine.value==='10'?'2-stroke':'4-stroke'})`;
+  try{await navigator.clipboard.writeText(text);equation.textContent='Result copied: '+text;}
+  catch(e){equation.textContent=text;}
+});
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(err => console.error("Service worker registration failed:", err)));
+}
+</script>
+</body>
+</html>
